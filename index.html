@@ -26,6 +26,22 @@
     background: radial-gradient(ellipse at 50% 50%, #1a0e07 0%, #0a0603 60%, #050200 100%);
     overflow: hidden;
   }
+  body.gifmode #game { width: 320px; height: 611px; max-width: 320px; }
+  body.gifmode { align-items: flex-start; justify-content: flex-start; }
+  body.gifmode #intro .story { font-size: 12px; line-height: 1.55; max-width: 280px; }
+  body.gifmode #intro .story p:nth-child(n+3) { display: none; }
+  body.gifmode #intro h1 { font-size: 26px; margin-bottom: 2px; letter-spacing: 0.04em; }
+  body.gifmode #intro .subtitle { margin-bottom: 14px; }
+  body.gifmode #intro .story { margin: 8px 0 16px; }
+  body.gifmode #intro { padding: 18px 20px; }
+  body.gifmode .reveal-card h3 { font-size: 16px; }
+  body.gifmode .reveal-card p { font-size: 12px; line-height: 1.55; }
+  body.gifmode #end { padding: 30px 16px 20px; }
+  body.gifmode .clipping h2 { font-size: 16px; }
+  body.gifmode .clipping p { font-size: 11px; line-height: 1.55; }
+  body.gifmode .timeline-row { font-size: 11px; padding: 4px 0; }
+  body.gifmode .timeline { padding: 10px 12px; }
+  body.gifmode .epilogue { font-size: 12px; line-height: 1.7; }
   .screen {
     position: absolute; inset: 0;
     display: none;
@@ -1500,6 +1516,36 @@ function playReveal() {
 
 // init
 applyLang();
+
+// ── GIF harness: ?frame=N renders a specific state ──
+(function gifHarness() {
+  const params = new URLSearchParams(window.location.search);
+  const fp = params.get('frame');
+  if (fp === null) return;
+  const f = parseInt(fp);
+  document.body.classList.add('gifmode');
+  setTimeout(() => {
+    if (f === 0) {
+      // intro — default
+    } else if (f === 1) {
+      // chamber 0 with torch mid-sweep, partial reveal
+      show("chamber"); loadChamber(0);
+      const positions = [[80,200],[180,180],[260,200],[260,360],[180,400],[100,520],[180,560]];
+      positions.forEach(([x,y], i) => setTimeout(() => window.__lascaux.setTorch(x,y), 30 + i*40));
+    } else if (f === 2) {
+      show("chamber"); loadChamber(0);
+      setTimeout(() => window.__lascaux.revealAll(), 80);
+    } else if (f === 3) {
+      show("chamber"); loadChamber(1);
+      setTimeout(() => window.__lascaux.revealAll(), 80);
+    } else if (f === 4) {
+      show("chamber"); loadChamber(2);
+      setTimeout(() => window.__lascaux.revealAll(), 80);
+    } else if (f === 5) {
+      show("end");
+    }
+  }, 60);
+})();
 
 // debug: expose torch state and reveal-all helper for headless testing
 window.__lascaux = {
