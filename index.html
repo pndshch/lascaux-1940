@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0603">
+<title>ラスコー 1940 / Lascaux 1940 — Discovery in the Dark</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #0a0603;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif;
+    color: #e6d4b3;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    overscroll-behavior: none; touch-action: none;
+  }
+  #game {
+    position: relative;
+    width: 100vw; height: 100vh;
+    max-width: 540px;
+    background: radial-gradient(ellipse at 50% 50%, #1a0e07 0%, #0a0603 60%, #050200 100%);
+    overflow: hidden;
+  }
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 22px;
+  }
+  .screen.active { display: flex; }
+
+  /* Lang toggle */
+  .lang-toggle {
+    position: absolute; top: 12px; right: 14px;
+    z-index: 30;
+    display: flex; gap: 0;
+    background: rgba(20,12,6,0.7);
+    border: 1px solid #6b4a26;
+    border-radius: 999px;
+    overflow: hidden;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .lang-toggle button {
+    background: transparent; border: 0;
+    color: #a08862; padding: 5px 10px;
+    font-family: inherit; cursor: pointer;
+    font-weight: 600;
+  }
+  .lang-toggle button.on {
+    background: #a04826; color: #fff;
+  }
+
+  /* INTRO */
+  #intro {
+    text-align: center;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(160,72,38,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.7) 0%, transparent 60%);
+  }
+  .intro-mark {
+    font-size: 11px; letter-spacing: 0.4em;
+    color: #8a6f4a; margin-bottom: 14px;
+  }
+  #intro h1 {
+    font-size: clamp(28px, 7vw, 40px);
+    font-weight: 700;
+    color: #e8d2a3;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  }
+  #intro .subtitle {
+    font-size: 11px; letter-spacing: 0.32em;
+    color: #a08862;
+    margin-bottom: 22px;
+  }
+  .story {
+    font-size: clamp(13px, 3.4vw, 15px);
+    line-height: 1.85;
+    max-width: 420px;
+    color: #d6c19a;
+    margin: 14px 0 26px;
+    text-align: left;
+    padding: 0 8px;
+  }
+  .story strong { color: #f0d59a; font-weight: 600; }
+  .story em { color: #d68458; font-style: normal; }
+  .story-date {
+    text-align: center;
+    font-size: 12px; letter-spacing: 0.2em;
+    color: #c98e3a;
+    margin: 8px 0 18px;
+    border-top: 1px solid #4a3520;
+    border-bottom: 1px solid #4a3520;
+    padding: 8px 0;
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, #c25a30 0%, #8a3815 100%);
+    color: #fff7e6;
+    border: 0;
+    padding: 14px 32px;
+    font-size: 15px;
+    letter-spacing: 0.16em;
+    font-family: inherit;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(160,72,38,0.5), inset 0 1px 0 rgba(255,255,255,0.18);
+    transition: transform 0.1s;
+  }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-secondary {
+    background: transparent;
+    color: #c98e3a;
+    border: 1px solid #6b4a26;
+    padding: 10px 22px;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    font-family: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* CHAMBER */
+  #chamber { padding: 0; }
+  #cave {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    cursor: none;
+  }
+  .chamber-name {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 0.36em;
+    color: #c98e3a;
+    text-shadow: 0 1px 4px #000, 0 0 12px rgba(0,0,0,0.9);
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  .progress-bar {
+    position: absolute;
+    bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    width: 70%; max-width: 260px;
+    height: 3px;
+    background: rgba(80,55,30,0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #a04826, #ffaa55);
+    transition: width 0.15s;
+    box-shadow: 0 0 8px rgba(255,170,85,0.5);
+  }
+  .hint {
+    position: absolute;
+    bottom: 38px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    color: #c98e3a;
+    text-shadow: 0 1px 4px #000;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    animation: hintPulse 3s ease-out forwards;
+  }
+  @keyframes hintPulse {
+    0% { opacity: 0; }
+    20% { opacity: 0.95; }
+    80% { opacity: 0.95; }
+    100% { opacity: 0; }
+  }
+
+  /* Reveal card overlay */
+  .reveal-card {
+    position: absolute;
+    bottom: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 460px;
+    background: linear-gradient(180deg, #2a1810 0%, #160a05 100%);
+    border: 1px solid #6b4a26;
+    border-radius: 8px;
+    padding: 18px 22px 20px;
+    z-index: 20;
+    transition: bottom 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.8);
+    text-align: left;
+  }
+  .reveal-card.show { bottom: 14px; }
+  .reveal-card h3 {
+    font-size: 18px;
+    color: #f0d59a;
+    margin-bottom: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .reveal-card .age {
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: #c98e3a;
+    margin-bottom: 10px;
+  }
+  .reveal-card p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #d6c19a;
+    margin-bottom: 14px;
+  }
+  .reveal-card p strong { color: #f0d59a; }
+  .reveal-card .next {
+    background: linear-gradient(180deg, #c25a30 0%, #8a3815 100%);
+    color: #fff7e6;
+    border: 0;
+    padding: 10px 24px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-family: inherit;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  /* END */
+  #end {
+    overflow-y: auto;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 64px 22px 32px;
+  }
+  .clipping {
+    background: linear-gradient(180deg, #d6c4a3 0%, #b09870 100%);
+    color: #1a0e08;
+    padding: 18px 18px 16px;
+    margin-bottom: 18px;
+    border-radius: 2px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+    transform: rotate(-1deg);
+    font-family: "Hiragino Mincho ProN", "Times New Roman", serif;
+  }
+  .clipping .masthead {
+    border-bottom: 2px solid #1a0e08;
+    border-top: 2px solid #1a0e08;
+    padding: 4px 0;
+    margin-bottom: 8px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-align: center;
+    font-weight: 700;
+  }
+  .clipping h2 {
+    font-size: 18px;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .clipping .dateline {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: #5a4020;
+    margin-bottom: 8px;
+  }
+  .clipping p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #2a1810;
+  }
+  .clipping p + p { margin-top: 6px; }
+  .timeline {
+    background: rgba(20,12,6,0.5);
+    border: 1px solid #4a3520;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .timeline h3 {
+    font-size: 12px; letter-spacing: 0.24em;
+    color: #c98e3a; margin-bottom: 10px;
+    text-align: center;
+  }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(74,53,32,0.3);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .timeline-row:last-child { border-bottom: 0; }
+  .timeline-row .yr {
+    color: #c98e3a;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .timeline-row .ev { color: #d6c19a; }
+  .timeline-row .ev strong { color: #f0d59a; }
+  .epilogue {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #d6c19a;
+    margin: 18px auto;
+    max-width: 420px;
+  }
+  .epilogue strong { color: #f0d59a; }
+  .end-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 14px;
+  }
+  .end-buttons button { flex: 0 1 auto; }
+
+  .credit {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: #6b5a3a;
+    margin-top: 26px;
+  }
+  .credit a { color: #8a7a55; text-decoration: none; }
+
+  @media (max-height: 620px) {
+    #intro { padding: 14px 22px; }
+    .story { margin: 8px 0 16px; line-height: 1.6; }
+    .intro-mark { margin-bottom: 6px; }
+    .story-date { margin: 4px 0 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="lang-toggle">
+    <button id="langJa" class="on">JP</button>
+    <button id="langEn">EN</button>
+  </div>
+
+  <!-- INTRO SCREEN -->
+  <div id="intro" class="screen active">
+    <div class="intro-mark" data-i18n="introMark">MONTIGNAC · 12 SEP 1940</div>
+    <h1 data-i18n="title">ラスコー 1940</h1>
+    <div class="subtitle" data-i18n="subtitle">DISCOVERY · IN · THE · DARK</div>
+
+    <div class="story-date" data-i18n="dateline">1940年 9月12日 · フランス南西部</div>
+
+    <div class="story" data-i18n="story">
+      <p>1940年9月、フランスは戦時下にあった。<strong>モンティニャック</strong>の森。雷雨で倒れたモミの木の<strong>根元</strong>に、ぽっかりと穴が開いていた。</p>
+      <p>9月12日、修理工見習い・<strong>マルセル・ラヴィダ</strong>(18歳)は、犬の<strong>ロボ</strong>と森を歩いていた。ロボがあとを追ったその穴は、噂の<em>地下道</em>かもしれない——城の宝物につながるという。</p>
+      <p>翌日、彼は仲間3人と戻ってきた。<strong>ジャック</strong>、<strong>ジョルジュ</strong>、<strong>シモン</strong>。<strong>油ランプ</strong>を1つだけ手に、ロープと松の松明をもって、穴から滑り降りた。</p>
+      <p>10メートルの斜面を下り、低い天井の通路を抜けた。<em>ランプを上にむけた瞬間</em>——天井から壁から、<strong>動物たち</strong>が彼らを見おろしていた。<br>17,300年、誰の目にも触れなかった<strong>絵</strong>だった。</p>
+      <p style="text-align:center;color:#c98e3a;margin-top:14px;letter-spacing:0.12em;">あなたは、その夜のランプを持つ。</p>
+    </div>
+
+    <button id="startBtn" class="btn-primary" data-i18n="start">▷ 洞窟に入る</button>
+  </div>
+
+  <!-- CHAMBER SCREEN (canvas-based) -->
+  <div id="chamber" class="screen">
+    <canvas id="cave"></canvas>
+    <div class="chamber-name" id="chamberName"></div>
+    <div class="hint" id="hint" data-i18n="hint">指で動かす · ランプで照らす</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="reveal-card" id="revealCard">
+      <h3 id="revealName"></h3>
+      <div class="age" id="revealAge"></div>
+      <p id="revealText"></p>
+      <button class="next" id="nextBtn" data-i18n="next">▷ 奥へ進む</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end" class="screen">
+    <div class="clipping">
+      <div class="masthead" data-i18n="masthead">SUD-OUEST · 1940</div>
+      <h2 data-i18n="endlede">少年たち、17,300年前の絵を発見</h2>
+      <div class="dateline" data-i18n="enddateline">1940年9月13日 · モンティニャック発</div>
+      <p data-i18n="endbody1">マルセル・ラヴィダ(18)、ジャック・マルサル(15)、ジョルジュ・アニェル(16)、シモン・コエンカ(15)は、ヴェゼール川を見おろす丘の穴を探検した。地中の洞窟で発見されたのは、約2000点の<strong>動物の絵</strong>と<strong>抽象記号</strong>。<strong>馬、オーロックス、シカ、バイソン</strong>、そして人類最古級のひとり——『井戸の人』。</p>
+      <p data-i18n="endbody2">考古学者<strong>アンリ・ブルイユ神父</strong>が現地を訪れ、これを<em>「先史美術のシスティーナ礼拝堂」</em>と呼んだ。少年たちは8日間、洞窟を見守った。</p>
+    </div>
+
+    <div class="timeline">
+      <h3 data-i18n="tlTitle">ラスコー — 17,300 年の沈黙</h3>
+      <div class="timeline-row"><span class="yr" data-i18n="tly1">前 15,300</span><span class="ev" data-i18n="tle1"><strong>絵が描かれる</strong>（マグダレニアン期）</span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly2">前 13,000</span><span class="ev" data-i18n="tle2">入口が落石で<strong>密閉</strong>される</span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly3">1940</span><span class="ev" data-i18n="tle3"><strong>9月12日</strong> ロボの落ちた穴</span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly4">1948</span><span class="ev" data-i18n="tle4">一般公開開始（年12万人来場）</span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly5">1963</span><span class="ev" data-i18n="tle5">来場者の<strong>息</strong>と<strong>体温</strong>で藻が発生 — <em>永久閉鎖</em></span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly6">1983</span><span class="ev" data-i18n="tle6">ラスコーII（複製洞窟）開園</span></div>
+      <div class="timeline-row"><span class="yr" data-i18n="tly7">2025</span><span class="ev" data-i18n="tle7">本物は<strong>少数の研究者</strong>のみ立入可</span></div>
+    </div>
+
+    <div class="epilogue" data-i18n="epi">
+      <p>17,300年。<br>少年4人は<strong>息</strong>でその沈黙を破り、<br>世界はその<strong>息</strong>で絵を失った。</p>
+    </div>
+
+    <div class="end-buttons">
+      <button class="btn-secondary" id="restartBtn" data-i18n="restart">もう一度</button>
+    </div>
+
+    <div class="credit">
+      <a href="https://pndshch.github.io/" target="_blank" data-i18n="credit">↩ pndshch.github.io</a>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────
+// I18N
+// ─────────────────────────────────────────────
+const I18N = {
+  ja: {
+    introMark: "MONTIGNAC · 12 SEP 1940",
+    title: "ラスコー 1940",
+    subtitle: "DISCOVERY · IN · THE · DARK",
+    dateline: "1940年 9月12日 · フランス南西部",
+    story: `<p>1940年9月、フランスは戦時下にあった。<strong>モンティニャック</strong>の森。雷雨で倒れたモミの木の<strong>根元</strong>に、ぽっかりと穴が開いていた。</p>
+      <p>9月12日、修理工見習い・<strong>マルセル・ラヴィダ</strong>(18歳)は、犬の<strong>ロボ</strong>と森を歩いていた。ロボがあとを追ったその穴は、噂の<em>地下道</em>かもしれない——城の宝物につながるという。</p>
+      <p>翌日、彼は仲間3人と戻ってきた。<strong>ジャック</strong>、<strong>ジョルジュ</strong>、<strong>シモン</strong>。<strong>油ランプ</strong>を1つだけ手に、ロープと松の松明をもって、穴から滑り降りた。</p>
+      <p>10メートルの斜面を下り、低い天井の通路を抜けた。<em>ランプを上にむけた瞬間</em>——天井から壁から、<strong>動物たち</strong>が彼らを見おろしていた。<br>17,300年、誰の目にも触れなかった<strong>絵</strong>だった。</p>
+      <p style="text-align:center;color:#c98e3a;margin-top:14px;letter-spacing:0.12em;">あなたは、その夜のランプを持つ。</p>`,
+    start: "▷ 洞窟に入る",
+    hint: "指で動かす · ランプで照らす",
+    next: "▷ 奥へ進む",
+    masthead: "SUD-OUEST · 1940",
+    endlede: "少年たち、17,300年前の絵を発見",
+    enddateline: "1940年9月13日 · モンティニャック発",
+    endbody1: "マルセル・ラヴィダ(18)、ジャック・マルサル(15)、ジョルジュ・アニェル(16)、シモン・コエンカ(15)は、ヴェゼール川を見おろす丘の穴を探検した。地中の洞窟で発見されたのは、約2000点の<strong>動物の絵</strong>と<strong>抽象記号</strong>。<strong>馬、オーロックス、シカ、バイソン</strong>、そして人類最古級のひとり——『井戸の人』。",
+    endbody2: "考古学者<strong>アンリ・ブルイユ神父</strong>が現地を訪れ、これを<em>「先史美術のシスティーナ礼拝堂」</em>と呼んだ。少年たちは8日間、洞窟を見守った。",
+    tlTitle: "ラスコー — 17,300 年の沈黙",
+    tly1: "前 15,300", tle1: "<strong>絵が描かれる</strong>（マグダレニアン期）",
+    tly2: "前 13,000", tle2: "入口が落石で<strong>密閉</strong>される",
+    tly3: "1940",      tle3: "<strong>9月12日</strong> ロボの落ちた穴",
+    tly4: "1948",      tle4: "一般公開開始（年12万人来場）",
+    tly5: "1963",      tle5: "来場者の<strong>息</strong>と<strong>体温</strong>で藻が発生 — <em>永久閉鎖</em>",
+    tly6: "1983",      tle6: "ラスコーII（複製洞窟）開園",
+    tly7: "2025",      tle7: "本物は<strong>少数の研究者</strong>のみ立入可",
+    epi: "<p>17,300年。<br>少年4人は<strong>息</strong>でその沈黙を破り、<br>世界はその<strong>息</strong>で絵を失った。</p>",
+    restart: "もう一度",
+    credit: "↩ pndshch.github.io",
+    chamberHall:    "雄牛の広間   ·   HALL OF THE BULLS",
+    chamberAxial:   "軸状の通路   ·   AXIAL GALLERY",
+    chamberShaft:   "井戸の場面   ·   THE SHAFT",
+    paintings: {
+      auroch: {
+        name: "巨大なる黒い雄牛",
+        age: "オーロックス · 約 17,300 年前 · 全長 5.2 m",
+        text: "<strong>絶滅した</strong>原牛——オーロックスの最大個体は肩高 1.8m、全長 3m。1627年、最後の1頭がポーランドで死んだ。<br>この絵は<strong>5.2m</strong>。実物より<em>大きい</em>。"
+      },
+      horse: {
+        name: "中国馬",
+        age: "ホース · 約 17,300 年前 · 黄土と赤土",
+        text: "腹がふくれている——<strong>妊娠した牝馬</strong>。墨と赤土で<em>毛並み</em>まで描き分けてある。<br>ピカソは1940年代、ラスコーを訪れ言った——<strong>「我々は何ひとつ発明していない」</strong>。"
+      },
+      shaft: {
+        name: "井戸の人",
+        age: "ザ・シャフト · 唯一の人間像",
+        text: "鳥のような頭、勃起した男。隣に<strong>傷ついたバイソン</strong>——内臓が出ている。<br>これが<strong>狩りの失敗</strong>か、<strong>シャーマンの夢</strong>か——80年議論されている。<br>ラスコーで描かれた<em>たった1人</em>の人間。"
+      }
+    }
+  },
+  en: {
+    introMark: "MONTIGNAC · 12 SEP 1940",
+    title: "Lascaux 1940",
+    subtitle: "DISCOVERY · IN · THE · DARK",
+    dateline: "12 September 1940 · Southwest France",
+    story: `<p>September 1940. France was at war. In the woods near <strong>Montignac</strong>, a fir tree had been uprooted by a storm — and at its <strong>roots</strong>, a hole gaped open.</p>
+      <p>On 12 September, eighteen-year-old apprentice mechanic <strong>Marcel Ravidat</strong> was walking with his dog <strong>Robot</strong>. Robot ran into the hole. The boys had heard a legend — that an underground tunnel led from here to the <em>treasure</em> of an old château.</p>
+      <p>The next day, Marcel returned with three friends: <strong>Jacques</strong>, <strong>Georges</strong>, <strong>Simon</strong>. With a single <strong>oil lamp</strong>, ropes and pine torches, they slid down the shaft.</p>
+      <p>Ten meters down, through a low passage. <em>The instant they raised the lamp</em>, animals looked back at them from ceiling and wall — <strong>paintings</strong> no one had seen for <strong>17,300 years</strong>.</p>
+      <p style="text-align:center;color:#c98e3a;margin-top:14px;letter-spacing:0.12em;">You hold their lamp tonight.</p>`,
+    start: "▷ Enter the cave",
+    hint: "drag · the lamp follows",
+    next: "▷ Deeper",
+    masthead: "SUD-OUEST · 1940",
+    endlede: "Boys discover paintings 17,300 years old",
+    enddateline: "Montignac · 13 September 1940",
+    endbody1: "Marcel Ravidat (18), Jacques Marsal (15), Georges Agnel (16) and Simon Coencas (15) explored a hole on a hill above the Vézère. Inside they found roughly <strong>2,000 figures</strong> — <strong>horses, aurochs, deer, bison</strong>, abstract signs, and one of the oldest depictions of a human ever found: the <em>Falling Man</em>.",
+    endbody2: "Archaeologist <strong>Abbé Henri Breuil</strong> came and called it <em>“the Sistine Chapel of prehistory.”</em> The boys watched over the cave for eight days.",
+    tlTitle: "Lascaux — 17,300 years of silence",
+    tly1: "15,300 BC", tle1: "<strong>Paintings made</strong> (Magdalenian)",
+    tly2: "13,000 BC", tle2: "Entrance <strong>sealed</strong> by a rockfall",
+    tly3: "1940",      tle3: "<strong>12 September</strong> — Robot the dog falls in",
+    tly4: "1948",      tle4: "Opens to public (120,000 visitors / yr)",
+    tly5: "1963",      tle5: "Visitors' <strong>breath</strong> & <strong>heat</strong> grow algae — <em>closed forever</em>",
+    tly6: "1983",      tle6: "Lascaux II (replica cave) opens",
+    tly7: "2025",      tle7: "The real cave: <strong>a handful of researchers</strong> only",
+    epi: "<p>17,300 years.<br>Four boys broke the silence with their <strong>breath</strong>,<br>and the world lost the paintings to its <strong>breath</strong>.</p>",
+    restart: "Again",
+    credit: "↩ pndshch.github.io",
+    chamberHall:    "HALL  OF  THE  BULLS",
+    chamberAxial:   "AXIAL  GALLERY",
+    chamberShaft:   "THE  SHAFT",
+    paintings: {
+      auroch: {
+        name: "The Great Black Bull",
+        age: "AUROCH · ~17,300 yrs · 5.2 m long",
+        text: "The <strong>extinct</strong> wild ox — aurochs stood 1.8m at the shoulder, 3m long. The last one died in Poland in <strong>1627</strong>.<br>This painting is <strong>5.2 m</strong>. <em>Larger than life.</em>"
+      },
+      horse: {
+        name: "The Chinese Horse",
+        age: "HORSE · ~17,300 yrs · ochre & charcoal",
+        text: "The swollen belly — a <strong>pregnant mare</strong>. Charcoal and ochre, with <em>shading</em> for the coat.<br>In the 1940s Picasso saw Lascaux and said: <strong>“We have invented nothing.”</strong>"
+      },
+      shaft: {
+        name: "The Falling Man",
+        age: "THE SHAFT · the only human figure",
+        text: "Bird-headed, falling, erect. Beside him a <strong>wounded bison</strong>, intestines spilling.<br>A <strong>hunting accident</strong>? A <strong>shaman's vision</strong>? The argument is 80 years old.<br>The <em>only</em> human figure in all of Lascaux."
+      }
+    }
+  }
+};
+
+let lang = "ja";
+let LANG = I18N[lang];
+
+function applyLang() {
+  LANG = I18N[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (LANG[key]) el.innerHTML = LANG[key];
+  });
+  document.getElementById("langJa").classList.toggle("on", lang === "ja");
+  document.getElementById("langEn").classList.toggle("on", lang === "en");
+  if (currentChamber !== null) {
+    document.getElementById("chamberName").textContent = chamberDisplayName(currentChamber);
+    if (revealCardShown) {
+      const p = LANG.paintings[chambers[currentChamber].key];
+      document.getElementById("revealName").textContent = p.name;
+      document.getElementById("revealAge").textContent = p.age;
+      document.getElementById("revealText").innerHTML = p.text;
+    }
+  }
+}
+
+document.getElementById("langJa").onclick = () => { lang = "ja"; applyLang(); };
+document.getElementById("langEn").onclick = () => { lang = "en"; applyLang(); };
+
+// ─────────────────────────────────────────────
+// SCREENS
+// ─────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+document.getElementById("startBtn").onclick = () => {
+  startAmbient();
+  show("chamber");
+  loadChamber(0);
+};
+document.getElementById("nextBtn").onclick = () => advanceChamber();
+document.getElementById("restartBtn").onclick = () => {
+  currentChamber = null;
+  show("intro");
+};
+
+// ─────────────────────────────────────────────
+// CHAMBERS
+// ─────────────────────────────────────────────
+const chambers = [
+  { key: "auroch", roomNameKey: "chamberHall",  draw: drawAuroch  },
+  { key: "horse",  roomNameKey: "chamberAxial", draw: drawHorse   },
+  { key: "shaft",  roomNameKey: "chamberShaft", draw: drawShaft   }
+];
+
+let currentChamber = null;
+let revealCardShown = false;
+
+function chamberDisplayName(idx) {
+  return LANG[chambers[idx].roomNameKey];
+}
+
+function loadChamber(idx) {
+  currentChamber = idx;
+  revealCardShown = false;
+  document.getElementById("chamberName").textContent = chamberDisplayName(idx);
+  document.getElementById("progressFill").style.width = "0%";
+  document.getElementById("revealCard").classList.remove("show");
+  document.getElementById("hint").style.animation = "none";
+  void document.getElementById("hint").offsetWidth;
+  document.getElementById("hint").style.animation = "";
+  setupCanvas();
+  startTorch();
+}
+
+function advanceChamber() {
+  const next = currentChamber + 1;
+  if (next >= chambers.length) {
+    show("end");
+    stopTorch();
+  } else {
+    loadChamber(next);
+  }
+}
+
+// ─────────────────────────────────────────────
+// CANVAS / TORCH REVEAL ENGINE
+// ─────────────────────────────────────────────
+const canvas = document.getElementById("cave");
+const ctx = canvas.getContext("2d");
+
+let darkCanvas, darkCtx;       // mask: opaque dark, erased by torch
+let paintingCanvas, paintCtx;  // baked painting + cave wall
+let glowCanvas, glowCtx;       // torch glow overlay (additive)
+
+let W = 0, H = 0, DPR = 1;
+let torchX = 0, torchY = 0, hasTorch = false;
+let revealRatio = 0;
+let lastSampleTime = 0;
+let raf = 0;
+let revealReached = false;
+let pulse = 0;
+
+function setupCanvas() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  W = Math.floor(rect.width  * DPR);
+  H = Math.floor(rect.height * DPR);
+  canvas.width = W;
+  canvas.height = H;
+
+  paintingCanvas = document.createElement("canvas");
+  paintingCanvas.width = W; paintingCanvas.height = H;
+  paintCtx = paintingCanvas.getContext("2d");
+
+  darkCanvas = document.createElement("canvas");
+  darkCanvas.width = W; darkCanvas.height = H;
+  darkCtx = darkCanvas.getContext("2d");
+
+  glowCanvas = document.createElement("canvas");
+  glowCanvas.width = W; glowCanvas.height = H;
+  glowCtx = glowCanvas.getContext("2d");
+
+  drawCaveWall(paintCtx, W, H);
+  chambers[currentChamber].draw(paintCtx, W, H);
+
+  // fill darkness opaque
+  darkCtx.globalCompositeOperation = "source-over";
+  darkCtx.fillStyle = "#06030a";
+  darkCtx.fillRect(0, 0, W, H);
+
+  // initial pre-revealed faint patch in center so player sees something to draw toward
+  // (just tiny so they discover the rest)
+  hasTorch = false;
+  torchX = W * 0.5;
+  torchY = H * 0.5;
+  revealRatio = 0;
+  revealReached = false;
+}
+
+function resizeOnRotate() {
+  if (currentChamber === null) return;
+  // preserve approximately-revealed area by re-running setup
+  // (resize is rare; full reset is acceptable)
+  setupCanvas();
+}
+window.addEventListener("resize", resizeOnRotate);
+window.addEventListener("orientationchange", resizeOnRotate);
+
+// ── pointer handling ──
+function pointerPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  let cx, cy;
+  if (e.touches && e.touches.length) {
+    cx = e.touches[0].clientX;
+    cy = e.touches[0].clientY;
+  } else {
+    cx = e.clientX;
+    cy = e.clientY;
+  }
+  return {
+    x: (cx - rect.left) * DPR,
+    y: (cy - rect.top)  * DPR
+  };
+}
+
+function onPointer(e) {
+  e.preventDefault();
+  const p = pointerPos(e);
+  torchX = p.x; torchY = p.y;
+  hasTorch = true;
+}
+
+canvas.addEventListener("mousedown",   onPointer);
+canvas.addEventListener("mousemove",   (e) => { if (e.buttons || hasTorch) onPointer(e); });
+canvas.addEventListener("mouseleave",  () => { /* keep torch where it was */ });
+canvas.addEventListener("touchstart",  onPointer, { passive: false });
+canvas.addEventListener("touchmove",   onPointer, { passive: false });
+canvas.addEventListener("touchend",    (e) => { e.preventDefault(); });
+
+// ── torch erase + render loop ──
+function startTorch() {
+  if (raf) clearTimeout(raf);
+  raf = setTimeout(tickWrap, 16);
+}
+function stopTorch() {
+  if (raf) clearTimeout(raf);
+  raf = 0;
+}
+function tickWrap() {
+  tick(performance.now());
+  raf = setTimeout(tickWrap, 16);
+}
+
+function tick(t) {
+  pulse += 0.05;
+  const flick = 1 + Math.sin(pulse * 2.3) * 0.04 + Math.sin(pulse * 5.7) * 0.02;
+  const baseR = Math.min(W, H) * 0.22;
+  const r = baseR * flick;
+
+  if (hasTorch) {
+    // erase darkness within torch radius (persistent)
+    darkCtx.save();
+    darkCtx.globalCompositeOperation = "destination-out";
+    const grad = darkCtx.createRadialGradient(torchX, torchY, 0, torchX, torchY, r);
+    grad.addColorStop(0,    "rgba(0,0,0,1)");
+    grad.addColorStop(0.55, "rgba(0,0,0,0.5)");
+    grad.addColorStop(1,    "rgba(0,0,0,0)");
+    darkCtx.fillStyle = grad;
+    darkCtx.fillRect(torchX - r, torchY - r, 2 * r, 2 * r);
+    darkCtx.restore();
+
+    // sample reveal ratio occasionally
+    if (t - lastSampleTime > 200) {
+      lastSampleTime = t;
+      sampleReveal();
+    }
+  }
+
+  // composite to main canvas
+  ctx.clearRect(0, 0, W, H);
+  ctx.drawImage(paintingCanvas, 0, 0);
+  ctx.drawImage(darkCanvas,    0, 0);
+
+  // torch glow
+  if (hasTorch) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const glow = ctx.createRadialGradient(torchX, torchY, 0, torchX, torchY, r * 1.4);
+    glow.addColorStop(0,    "rgba(255,180,90,0.32)");
+    glow.addColorStop(0.4,  "rgba(220,120,40,0.18)");
+    glow.addColorStop(1,    "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(torchX - r * 1.5, torchY - r * 1.5, 3 * r, 3 * r);
+    ctx.restore();
+
+    // tiny torch flame
+    ctx.save();
+    const flR = 6 * DPR + Math.sin(pulse * 11) * 1.5 * DPR;
+    const fg = ctx.createRadialGradient(torchX, torchY, 0, torchX, torchY, flR * 3);
+    fg.addColorStop(0,   "rgba(255,230,170,0.95)");
+    fg.addColorStop(0.5, "rgba(255,150,60,0.6)");
+    fg.addColorStop(1,   "rgba(0,0,0,0)");
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.arc(torchX, torchY, flR * 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (revealRatio >= 0.45 && !revealReached) {
+    revealReached = true;
+    showRevealCard();
+  }
+}
+
+function sampleReveal() {
+  // Sample mask alpha at a coarse grid; count cells where alpha is low (= cleared)
+  const cols = 20, rows = 30;
+  const stepX = W / cols, stepY = H / rows;
+  let cleared = 0, total = 0;
+  // we read ImageData of darkCanvas at sample points
+  // for performance, sample a single low-resolution image
+  try {
+    const w = 40, h = 60;
+    const tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    const tctx = tmp.getContext("2d");
+    tctx.drawImage(darkCanvas, 0, 0, w, h);
+    const data = tctx.getImageData(0, 0, w, h).data;
+    for (let i = 3; i < data.length; i += 4) {
+      total++;
+      if (data[i] < 180) cleared++;  // alpha below 70%
+    }
+    revealRatio = total ? cleared / total : 0;
+  } catch (e) {
+    revealRatio = Math.min(1, revealRatio + 0.02);
+  }
+  document.getElementById("progressFill").style.width = (revealRatio * 100).toFixed(1) + "%";
+}
+
+function showRevealCard() {
+  const p = LANG.paintings[chambers[currentChamber].key];
+  document.getElementById("revealName").textContent = p.name;
+  document.getElementById("revealAge").textContent = p.age;
+  document.getElementById("revealText").innerHTML = p.text;
+  document.getElementById("revealCard").classList.add("show");
+  revealCardShown = true;
+  playReveal();
+  // Final flood-fill the rest of the canvas after a beat
+  setTimeout(() => {
+    floodReveal();
+  }, 700);
+}
+
+function floodReveal() {
+  // animate darkness fading away
+  const start = performance.now();
+  const dur = 1100;
+  function step() {
+    const now = performance.now();
+    const t = Math.min(1, (now - start) / dur);
+    darkCtx.save();
+    darkCtx.globalCompositeOperation = "destination-out";
+    darkCtx.fillStyle = `rgba(0,0,0,${0.05 + t * t * 0.18})`;
+    darkCtx.fillRect(0, 0, W, H);
+    darkCtx.restore();
+    if (t < 1) setTimeout(step, 16);
+    else {
+      darkCtx.save();
+      darkCtx.globalCompositeOperation = "destination-out";
+      darkCtx.fillStyle = "rgba(0,0,0,1)";
+      darkCtx.fillRect(0, 0, W, H);
+      darkCtx.restore();
+    }
+  }
+  setTimeout(step, 16);
+}
+
+// ─────────────────────────────────────────────
+// PAINTING RENDERERS
+// ─────────────────────────────────────────────
+function drawCaveWall(c, w, h) {
+  // base limestone gradient — warm honey tone
+  const g = c.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0,   "#b89868");
+  g.addColorStop(0.4, "#d6b582");
+  g.addColorStop(0.7, "#c2a06e");
+  g.addColorStop(1,   "#8a6e40");
+  c.fillStyle = g;
+  c.fillRect(0, 0, w, h);
+
+  // mottle / texture
+  const seed = (currentChamber || 0) * 37;
+  for (let i = 0; i < 600; i++) {
+    const x = ((i * 73 + seed) * 977) % w;
+    const y = ((i * 191 + seed) * 1103) % h;
+    const r = ((i * 13 + 5) % 30) + 6;
+    const a = 0.04 + ((i * 7) % 8) / 100;
+    c.fillStyle = (i % 3 === 0)
+      ? `rgba(60,38,18,${a})`
+      : `rgba(220,180,120,${a * 0.7})`;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+  }
+  // dark cracks
+  c.strokeStyle = "rgba(40,22,10,0.35)";
+  c.lineWidth = 1.5 * DPR;
+  for (let i = 0; i < 18; i++) {
+    c.beginPath();
+    const x0 = (i * 73 + seed * 3) % w;
+    const y0 = (i * 113 + seed * 5) % h;
+    let x = x0, y = y0;
+    c.moveTo(x, y);
+    for (let j = 0; j < 6; j++) {
+      x += ((i * j * 17 % 60) - 30) * DPR;
+      y += ((i * j * 23 % 50) - 20) * DPR;
+      c.lineTo(x, y);
+    }
+    c.stroke();
+  }
+  // vignette
+  const vg = c.createRadialGradient(w/2, h/2, Math.min(w,h)*0.3, w/2, h/2, Math.max(w,h)*0.7);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.55)");
+  c.fillStyle = vg;
+  c.fillRect(0, 0, w, h);
+}
+
+// Pigment helpers (cave-art palette)
+const PIG_CHARCOAL = "#1a0e08";
+const PIG_RED      = "#9a3a1c";
+const PIG_REDLT    = "#bd5a32";
+const PIG_OCHRE    = "#caa050";
+const PIG_OCHREDK  = "#8a6628";
+
+function setSketchStroke(c, color, width) {
+  c.strokeStyle = color;
+  c.lineWidth = width;
+  c.lineCap = "round";
+  c.lineJoin = "round";
+}
+
+// helper — frame design bbox into canvas with margin
+function fitDesign(c, w, h, dW, dH, dcx, dcy, vBias) {
+  const padX = w * 0.06, padY = h * 0.10;
+  const availW = w - padX * 2;
+  const availH = h - padY * 2;
+  const s = Math.min(availW / dW, availH / dH);
+  c.translate(w / 2, h / 2 + (vBias || 0) * h);
+  c.scale(s, s);
+  c.translate(-dcx, -dcy);
+  return s;
+}
+
+// ── 1. The Great Black Bull (Auroch) ──
+function drawAuroch(c, w, h) {
+  c.save();
+  // design bbox: x ∈ [-340, +260], y ∈ [-120, +160], center (-40, +20)
+  const s = fitDesign(c, w, h, 640, 320, -40, 20, 0);
+
+  // Body fill (charcoal silhouette, slightly transparent like cave art)
+  c.fillStyle = "rgba(20,12,8,0.78)";
+  c.beginPath();
+  // back arch from withers to rump
+  c.moveTo(-220, -50);
+  c.bezierCurveTo(-200, -95, -100, -110, 50,  -90);
+  c.bezierCurveTo( 130, -78,  170, -65, 215, -30);
+  // rump down
+  c.bezierCurveTo( 230, 0,    225, 30,  205, 55);
+  // belly back to front
+  c.bezierCurveTo( 150, 75,    50, 70, -40, 60);
+  c.bezierCurveTo(-110, 55, -160, 40, -200, 20);
+  // back of head
+  c.bezierCurveTo(-220, 0, -230, -25, -220, -50);
+  c.closePath();
+  c.fill();
+
+  // Head + horns (separate piece, large)
+  c.beginPath();
+  // snout
+  c.moveTo(-300, 30);
+  c.bezierCurveTo(-330, 25, -340, 0, -315, -15);
+  // up to top of head
+  c.bezierCurveTo(-295, -25, -260, -30, -240, -40);
+  // back to body neck
+  c.lineTo(-215, -45);
+  c.bezierCurveTo(-220, -10, -230, 15, -260, 30);
+  c.bezierCurveTo(-280, 35, -290, 35, -300, 30);
+  c.closePath();
+  c.fill();
+
+  // horn left (forward sweeping)
+  c.fillStyle = "rgba(10,6,3,0.92)";
+  c.beginPath();
+  c.moveTo(-275, -28);
+  c.bezierCurveTo(-330, -85, -370, -120, -355, -105);
+  c.bezierCurveTo(-345, -100, -315, -85, -290, -62);
+  c.bezierCurveTo(-275, -50, -270, -35, -275, -28);
+  c.closePath();
+  c.fill();
+
+  // horn right (back sweeping, smaller — perspective)
+  c.beginPath();
+  c.moveTo(-260, -32);
+  c.bezierCurveTo(-285, -75, -290, -100, -270, -88);
+  c.bezierCurveTo(-260, -82, -250, -65, -245, -50);
+  c.bezierCurveTo(-247, -38, -253, -32, -260, -32);
+  c.closePath();
+  c.fill();
+
+  // legs (4) - charcoal
+  c.fillStyle = "rgba(15,9,6,0.85)";
+  // front legs
+  c.fillRect(-130, 55, 18, 95);
+  c.fillRect(-90,  60, 18, 95);
+  // hind legs (slightly back)
+  c.fillRect(120, 50, 18, 100);
+  c.fillRect(165, 45, 18, 105);
+  // hooves
+  c.fillStyle = "rgba(10,6,3,0.95)";
+  [[-130,150],[-90,155],[120,150],[165,150]].forEach(([x,y])=>{
+    c.beginPath(); c.ellipse(x+9, y, 14, 6, 0, 0, Math.PI*2); c.fill();
+  });
+
+  // tail
+  c.strokeStyle = "rgba(10,6,3,0.9)";
+  c.lineWidth = 6;
+  c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(212, -10);
+  c.bezierCurveTo(245, 0, 260, 30, 248, 60);
+  c.stroke();
+
+  // eye highlight (tiny)
+  c.fillStyle = "rgba(220,200,160,0.5)";
+  c.beginPath(); c.ellipse(-265, -10, 4, 2, 0, 0, Math.PI*2); c.fill();
+
+  // outline overdraw — gives that "drawn" cave-art quality
+  setSketchStroke(c, "rgba(8,4,2,0.5)", 3);
+  c.beginPath();
+  c.moveTo(-220, -50);
+  c.bezierCurveTo(-200, -95, -100, -110, 50,  -90);
+  c.bezierCurveTo( 130, -78,  170, -65, 215, -30);
+  c.bezierCurveTo( 230, 0,    225, 30,  205, 55);
+  c.stroke();
+
+  c.restore();
+
+  // chamber-specific stippled red dots (frequent in Lascaux) — drawn in canvas coords above the bull
+  c.fillStyle = "rgba(150,52,28,0.55)";
+  for (let i = 0; i < 18; i++) {
+    const x = w * 0.08 + (i * 21) % (w * 0.84);
+    const y = h * 0.14 + ((i * 13) % 70);
+    c.beginPath();
+    c.arc(x, y, 3.5 + (i % 3), 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
+// ── 2. The Chinese Horse ──
+function drawHorse(c, w, h) {
+  c.save();
+  // design bbox: x ∈ [-260, +220], y ∈ [-80, +160], center (-20, +40)
+  const s = fitDesign(c, w, h, 520, 280, -20, 40, 0);
+
+  // shading patch (yellow ochre body fill)
+  c.fillStyle = "rgba(202,160,80,0.55)";
+  c.beginPath();
+  c.moveTo(-180, -20);
+  c.bezierCurveTo(-150, -55, -50, -65, 80, -55);
+  c.bezierCurveTo(160, -45, 200, -25, 215, 0);
+  c.bezierCurveTo(220, 25, 200, 45, 170, 55);
+  c.bezierCurveTo(80, 70, -40, 70, -130, 55);
+  c.bezierCurveTo(-160, 45, -180, 20, -185, 0);
+  c.closePath();
+  c.fill();
+
+  // darker red ochre rim along back
+  c.fillStyle = "rgba(154,58,28,0.5)";
+  c.beginPath();
+  c.moveTo(-170, -25);
+  c.bezierCurveTo(-140, -55, -40, -65, 80, -55);
+  c.bezierCurveTo(160, -45, 200, -28, 210, -8);
+  c.lineTo(190, 0);
+  c.bezierCurveTo(180, -15, 150, -30, 80, -38);
+  c.bezierCurveTo(-30, -45, -120, -38, -150, -10);
+  c.closePath();
+  c.fill();
+
+  // charcoal outline
+  setSketchStroke(c, PIG_CHARCOAL, 5);
+  c.beginPath();
+  c.moveTo(-185, 0);
+  c.bezierCurveTo(-195, -25, -185, -50, -160, -45);
+  // mane forward
+  c.bezierCurveTo(-150, -55, -130, -65, -110, -52);
+  c.bezierCurveTo(-90, -70, -40, -75, 30, -65);
+  c.bezierCurveTo(110, -55, 175, -40, 210, -15);
+  // rump
+  c.bezierCurveTo(225, 5, 220, 30, 195, 50);
+  // tail base
+  c.bezierCurveTo(190, 60, 180, 60, 175, 55);
+  // belly
+  c.bezierCurveTo(140, 65, 60, 70, -20, 65);
+  c.bezierCurveTo(-90, 65, -150, 50, -180, 20);
+  c.bezierCurveTo(-185, 12, -185, 4, -185, 0);
+  c.stroke();
+
+  // head — small, with tiny ear, large nostril
+  c.beginPath();
+  c.moveTo(-185, -5);
+  c.bezierCurveTo(-220, -20, -255, -10, -260, 5);
+  c.bezierCurveTo(-265, 18, -245, 25, -225, 22);
+  c.bezierCurveTo(-205, 20, -190, 12, -185, 5);
+  c.stroke();
+  // ear
+  c.beginPath();
+  c.moveTo(-200, -18);
+  c.lineTo(-205, -38);
+  c.lineTo(-188, -28);
+  c.closePath();
+  c.fillStyle = PIG_CHARCOAL;
+  c.fill();
+
+  // mane bristles (short upright lines)
+  c.lineWidth = 3;
+  c.strokeStyle = PIG_CHARCOAL;
+  for (let i = 0; i < 14; i++) {
+    const x = -160 + i * 14;
+    const y0 = -50 + Math.sin(i * 0.7) * 4;
+    c.beginPath();
+    c.moveTo(x, y0);
+    c.lineTo(x + 2, y0 - 16 - (i % 3) * 3);
+    c.stroke();
+  }
+
+  // legs (4) — black, slim
+  c.lineWidth = 7;
+  // front-left
+  c.beginPath(); c.moveTo(-100, 60); c.lineTo(-115, 145); c.stroke();
+  c.beginPath(); c.moveTo(-65,  62); c.lineTo(-70,  148); c.stroke();
+  // hind
+  c.beginPath(); c.moveTo(120, 58); c.lineTo(135, 150); c.stroke();
+  c.beginPath(); c.moveTo(160, 56); c.lineTo(175, 150); c.stroke();
+  // hooves
+  c.lineCap = "round";
+  c.lineWidth = 11;
+  [[-115,145],[-70,148],[135,150],[175,150]].forEach(([x,y])=>{
+    c.beginPath(); c.moveTo(x-2,y+1); c.lineTo(x+5,y+1); c.stroke();
+  });
+
+  // tail — sweeping black
+  c.lineWidth = 6;
+  c.beginPath();
+  c.moveTo(195, 30);
+  c.bezierCurveTo(230, 45, 240, 80, 215, 95);
+  c.stroke();
+
+  // eye
+  c.fillStyle = PIG_CHARCOAL;
+  c.beginPath();
+  c.ellipse(-225, 0, 4, 3, 0, 0, Math.PI * 2);
+  c.fill();
+
+  c.restore();
+
+  // pair of small hand prints (negative, red ochre) upper area
+  c.save();
+  c.translate(w * 0.82, h * 0.22);
+  c.fillStyle = "rgba(154,58,28,0.42)";
+  c.beginPath();
+  c.ellipse(0, 0, 22, 28, 0, 0, Math.PI * 2);
+  c.fill();
+  for (let i = 0; i < 5; i++) {
+    const ang = -Math.PI/2 + (i - 2) * 0.32;
+    const x1 = Math.cos(ang) * 22;
+    const y1 = Math.sin(ang) * 28;
+    c.beginPath();
+    c.ellipse(x1, y1, 5, 12, ang, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+}
+
+// ── 3. The Shaft scene — Falling Man + Wounded Bison + Bird-on-stick ──
+function drawShaft(c, w, h) {
+  // Use a virtual canvas with bison + man + bird laid out on 700-wide x 600-tall design
+  // We render each via fitDesign-styled scaling. Compute scene scale once.
+  const sceneW = 700, sceneH = 540;
+  const padX = w * 0.06, padY = h * 0.10;
+  const availW = w - padX * 2;
+  const availH = h - padY * 2;
+  const sceneScale = Math.min(availW / sceneW, availH / sceneH);
+  const sceneX = w / 2;     // canvas X for design (0,0)
+  const sceneY = h / 2;     // canvas Y for design (0,0)
+
+  // Bison — right side, design center +160, -50
+  c.save();
+  c.translate(sceneX + 160 * sceneScale, sceneY - 50 * sceneScale);
+  c.scale(sceneScale, sceneScale);
+
+  // bison body — dark charcoal / brown
+  c.fillStyle = "rgba(40,20,14,0.85)";
+  c.beginPath();
+  c.moveTo(-130, -20);
+  // hump
+  c.bezierCurveTo(-110, -75, -60, -80, 20, -55);
+  // back
+  c.bezierCurveTo(70, -45, 110, -30, 130, -10);
+  // rump
+  c.bezierCurveTo(140, 15, 130, 40, 110, 50);
+  // belly back
+  c.bezierCurveTo(60, 55, -30, 55, -90, 50);
+  c.bezierCurveTo(-115, 45, -135, 25, -140, 0);
+  c.closePath();
+  c.fill();
+
+  // head — low, lower than body level
+  c.beginPath();
+  c.moveTo(-145, 5);
+  c.bezierCurveTo(-180, 0, -200, 35, -175, 50);
+  c.bezierCurveTo(-160, 60, -135, 55, -125, 40);
+  c.lineTo(-130, 15);
+  c.closePath();
+  c.fill();
+
+  // horn
+  c.fillStyle = "rgba(20,10,8,0.95)";
+  c.beginPath();
+  c.moveTo(-160, 5);
+  c.bezierCurveTo(-180, -20, -190, -25, -178, -10);
+  c.bezierCurveTo(-170, 0, -165, 5, -160, 5);
+  c.closePath();
+  c.fill();
+
+  // legs
+  c.fillStyle = "rgba(25,14,10,0.85)";
+  c.fillRect(-90, 48, 14, 60);
+  c.fillRect(-50, 50, 14, 60);
+  c.fillRect( 60, 45, 14, 65);
+  c.fillRect( 95, 42, 14, 68);
+
+  // intestines spilling — distinctive Lascaux feature
+  c.strokeStyle = "rgba(154,58,28,0.85)";
+  c.lineWidth = 6;
+  c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(-30, 50);
+  c.bezierCurveTo(-25, 70, -45, 85, -30, 100);
+  c.bezierCurveTo(-20, 110, 0, 105, 5, 90);
+  c.bezierCurveTo(10, 80, -5, 75, 0, 65);
+  c.stroke();
+  // second loop
+  c.beginPath();
+  c.moveTo(-15, 55);
+  c.bezierCurveTo(15, 85, 30, 95, 25, 110);
+  c.stroke();
+
+  // spear thrust through bison body (diagonal line)
+  c.strokeStyle = "rgba(20,12,8,0.9)";
+  c.lineWidth = 4;
+  c.beginPath();
+  c.moveTo(-180, -85);
+  c.lineTo(80, 90);
+  c.stroke();
+  // spearhead
+  c.fillStyle = "rgba(20,12,8,0.95)";
+  c.beginPath();
+  c.moveTo(80, 90);
+  c.lineTo(72, 78);
+  c.lineTo(94, 85);
+  c.closePath();
+  c.fill();
+
+  // tail straight up — death pose
+  c.strokeStyle = "rgba(25,14,10,0.9)";
+  c.lineWidth = 5;
+  c.beginPath();
+  c.moveTo(128, -8);
+  c.lineTo(150, -50);
+  c.stroke();
+
+  // eye
+  c.fillStyle = "rgba(220,200,160,0.6)";
+  c.beginPath();
+  c.ellipse(-160, 22, 2.5, 1.8, 0, 0, Math.PI * 2);
+  c.fill();
+
+  c.restore();
+
+  // The Falling Man — left of bison, below
+  c.save();
+  c.translate(sceneX - 130 * sceneScale, sceneY + 100 * sceneScale);
+  c.scale(sceneScale, sceneScale);
+
+  // body — stick figure, fallen back
+  c.strokeStyle = PIG_CHARCOAL;
+  c.lineWidth = 5;
+  c.lineCap = "round";
+
+  // torso — diagonal
+  c.beginPath();
+  c.moveTo(-30, 30);   // hips
+  c.lineTo(50, -50);   // shoulders
+  c.stroke();
+
+  // head — bird-shaped (small, with beak)
+  c.fillStyle = PIG_CHARCOAL;
+  c.beginPath();
+  c.ellipse(60, -65, 12, 8, 0.4, 0, Math.PI * 2);
+  c.fill();
+  // beak
+  c.beginPath();
+  c.moveTo(70, -68);
+  c.lineTo(85, -75);
+  c.lineTo(72, -58);
+  c.closePath();
+  c.fill();
+
+  // arms — outstretched
+  c.lineWidth = 4;
+  c.beginPath();
+  c.moveTo(50, -50); // shoulder
+  c.lineTo(95, -25); // hand
+  c.stroke();
+  c.beginPath();
+  c.moveTo(50, -50);
+  c.lineTo(15, -8);
+  c.stroke();
+  // hands - 4 fingers each, like real Lascaux
+  for (let i = 0; i < 4; i++) {
+    c.beginPath();
+    c.moveTo(95, -25);
+    c.lineTo(102 + i*2, -32 + i*2);
+    c.stroke();
+  }
+  for (let i = 0; i < 4; i++) {
+    c.beginPath();
+    c.moveTo(15, -8);
+    c.lineTo(8 - i*2, -16 + i*1);
+    c.stroke();
+  }
+
+  // legs - splayed
+  c.lineWidth = 5;
+  c.beginPath();
+  c.moveTo(-30, 30);
+  c.lineTo(-65, 90);
+  c.stroke();
+  c.beginPath();
+  c.moveTo(-30, 30);
+  c.lineTo(15, 95);
+  c.stroke();
+  // feet
+  c.beginPath(); c.moveTo(-65, 90); c.lineTo(-78, 92); c.stroke();
+  c.beginPath(); c.moveTo(15, 95);  c.lineTo(28, 96);  c.stroke();
+
+  // erect phallus — historical detail
+  c.lineWidth = 4;
+  c.beginPath();
+  c.moveTo(-25, 30);
+  c.lineTo(-15, 50);
+  c.stroke();
+
+  c.restore();
+
+  // bird-on-stick — to the left of falling man
+  c.save();
+  c.translate(sceneX - 280 * sceneScale, sceneY + 100 * sceneScale);
+  c.scale(sceneScale, sceneScale);
+  c.strokeStyle = PIG_CHARCOAL;
+  c.lineWidth = 4;
+  // staff
+  c.beginPath();
+  c.moveTo(0, 80);
+  c.lineTo(0, -20);
+  c.stroke();
+  // bird perched
+  c.fillStyle = PIG_CHARCOAL;
+  c.beginPath();
+  c.ellipse(0, -32, 14, 8, 0, 0, Math.PI * 2);
+  c.fill();
+  // tail
+  c.beginPath();
+  c.moveTo(-12, -32);
+  c.lineTo(-26, -28);
+  c.lineTo(-12, -36);
+  c.closePath();
+  c.fill();
+  // head + beak
+  c.beginPath();
+  c.ellipse(13, -38, 6, 5, 0, 0, Math.PI * 2);
+  c.fill();
+  c.beginPath();
+  c.moveTo(18, -38);
+  c.lineTo(28, -42);
+  c.lineTo(18, -34);
+  c.closePath();
+  c.fill();
+  c.restore();
+
+  // small floating signs — dots & lines (Lascaux abstract signs) below the scene
+  c.fillStyle = "rgba(154,58,28,0.7)";
+  for (let i = 0; i < 6; i++) {
+    const x = w * 0.32 + i * 12;
+    const y = h * 0.86;
+    c.beginPath();
+    c.arc(x, y, 4, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.strokeStyle = "rgba(20,12,8,0.7)";
+  c.lineWidth = 3;
+  for (let i = 0; i < 4; i++) {
+    const x = w * 0.34 + i * 14;
+    const y = h * 0.90;
+    c.beginPath();
+    c.moveTo(x, y);
+    c.lineTo(x, y + 12);
+    c.stroke();
+  }
+}
+
+// ─────────────────────────────────────────────
+// AMBIENT AUDIO (Web Audio API, generated)
+// ─────────────────────────────────────────────
+let actx = null;
+let masterGain = null;
+let dripTimer = null;
+let crackleNode = null;
+let windNode = null;
+
+function ensureCtx() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = actx.createGain();
+      masterGain.gain.value = 0.4;
+      masterGain.connect(actx.destination);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === "suspended") actx.resume();
+}
+
+function startAmbient() {
+  ensureCtx();
+  if (!actx) return;
+  startWind();
+  scheduleDrip();
+}
+
+function startWind() {
+  if (!actx || windNode) return;
+  // pink noise via biquad-filtered white noise
+  const bufSize = 2 * actx.sampleRate;
+  const buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+  const data = buf.getChannelData(0);
+  let b0=0,b1=0,b2=0;
+  for (let i = 0; i < bufSize; i++) {
+    const w = Math.random() * 2 - 1;
+    b0 = 0.99765 * b0 + w * 0.0990460;
+    b1 = 0.96300 * b1 + w * 0.2965164;
+    b2 = 0.57000 * b2 + w * 1.0526913;
+    data[i] = (b0 + b1 + b2 + w * 0.1848) * 0.11;
+  }
+  const src = actx.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  const filt = actx.createBiquadFilter();
+  filt.type = "lowpass";
+  filt.frequency.value = 280;
+  const g = actx.createGain();
+  g.gain.value = 0.35;
+  src.connect(filt); filt.connect(g); g.connect(masterGain);
+  src.start();
+  windNode = src;
+}
+
+function scheduleDrip() {
+  if (!actx) return;
+  const wait = 1700 + Math.random() * 3200;
+  dripTimer = setTimeout(() => {
+    playDrip();
+    scheduleDrip();
+  }, wait);
+}
+
+function playDrip() {
+  if (!actx) return;
+  const t0 = actx.currentTime;
+  const o = actx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(900 + Math.random() * 400, t0);
+  o.frequency.exponentialRampToValueAtTime(180, t0 + 0.3);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.001, t0);
+  g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+  const f = actx.createBiquadFilter();
+  f.type = "bandpass";
+  f.frequency.value = 800;
+  f.Q.value = 4;
+  o.connect(f); f.connect(g); g.connect(masterGain);
+  o.start(t0); o.stop(t0 + 0.45);
+}
+
+function playReveal() {
+  if (!actx) return;
+  const t0 = actx.currentTime;
+  // soft chime — like awe
+  const freqs = [261.6, 392, 523.25, 659.25];
+  freqs.forEach((f, i) => {
+    const o = actx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = f;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(0.001, t0 + i * 0.18);
+    g.gain.exponentialRampToValueAtTime(0.16 - i*0.02, t0 + i*0.18 + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + i*0.18 + 1.6);
+    o.connect(g); g.connect(masterGain);
+    o.start(t0 + i*0.18); o.stop(t0 + i*0.18 + 1.7);
+  });
+}
+
+// init
+applyLang();
+
+// debug: expose torch state and reveal-all helper for headless testing
+window.__lascaux = {
+  setTorch(x, y) { torchX = x; torchY = y; hasTorch = true; },
+  revealAll() {
+    if (!darkCtx) return false;
+    darkCtx.save();
+    darkCtx.globalCompositeOperation = "destination-out";
+    darkCtx.fillStyle = "rgba(0,0,0,1)";
+    darkCtx.fillRect(0, 0, W, H);
+    darkCtx.restore();
+    revealRatio = 1;
+    if (!revealReached) { revealReached = true; showRevealCard(); }
+    return true;
+  },
+  state() { return { ch: currentChamber, ratio: revealRatio, hasTorch, W, H, DPR, pulse, raf }; }
+};
+
+// prevent context menu on long-press
+window.addEventListener("contextmenu", e => e.preventDefault());
+</script>
+</body>
+</html>
